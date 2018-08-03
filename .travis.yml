@@ -1,0 +1,17 @@
+language: python
+python:
+- '2.7'
+- '3.4'
+- '3.5'
+- '3.6'
+install:
+- pip install .
+script:
+- pytest
+deploy:
+  provider: pypi
+  user: LINE
+  password:
+    secure: mm70dB/UnpjDKkPhBB7aJok9KQpI/jQtBsT8SsUNgrhr04gXuXPQN3EGCmTf1aBAHc7A+j82USaT/A9wfEW/rI5H7J+fEVAWuCLWeoS84ShfdGQgzAVUIjQmka8R3F6EvLPp1FOMxInjhUMg7woUPQs8Ex87eFN+/aD4pEHEAGrgHcIvJ/q23+GvZ48vV7+FvTEU/hzckuzdSS/ym4IitzE8/FNS9slNXCiTdGHwKjfCa7K6M+HOYKnHkS9jbXAXK6VBHRmjVE/7JgpQBp2zFC7zMimHSCiXu7YF/8PcimysHA2I3YYNsJuH6BzJLACF7i95+zomZhd8bay5ctHVJasf//SqvJZocm6S7K3WJ0p6iiUZRoa+7PMUOayzE4IbgoWIgGbPkc1GUb93NLnQxvtvKqDyONRGwhkI34zMhutdjeV34scaU1Z6zxZRsXlsIAObaWlQS0EoEF4ZynsPDOTH+4yTRcrn6q+op1/u9vweneYl1PnRzPAApYpf533HbzzWQVDhJ5luQ8qRlVrVD62gSBz/sNXX7GPWlmO1dglkNX2JpdpV4tQw9xfYti5Y1uQXtamOj+dZKhDE6EGB2nSY8UzoeSqIEUf8ulUDfqpHhSnhnZXYA/bUuQCLKI4ZSgCTSwpCTUdqZmh9P/UMtv+sRdm5pyCeIHMqqeGK95I=
+  on:
+    tags: true
