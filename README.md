@@ -1,13 +1,16 @@
 # Clova Extension Kit SDK for Python
 
 [![PyPI](https://img.shields.io/pypi/v/clova-cek-sdk.svg)](https://pypi.python.org/pypi/clova-cek-sdk)
+[![][docs-stable-img]][docs-stable-url]
+[![][docs-latest-img]][docs-latest-url]
 
 This is a python library to simplify the use of the Clova Extensions Kit API.
 
 ## Documentation
 
 * [Clova Platform Guide](https://clova-developers.line.me/guide/)
-* [Clova Extension Python SDK API](https://line.github.io/clova-cek-sdk-python/)
+* [**STABLE**][docs-stable-url] &mdash; **most recently tagged version of the API documentation.**
+* [**LATEST**][docs-latest-url] &mdash; *in-development version of the API documentation.*
 
 ## Installation
 
@@ -37,8 +40,8 @@ pip install -e '.[docs]'
 sphinx-versioning build docs docs/_build/html
 ```
 
-#### Push
+[docs-latest-img]: https://img.shields.io/badge/docs-latest-blue.svg
+[docs-latest-url]: https://clova-cek-sdk-python.readthedocs.io/en/latest/
 
-```
-sphinx-versioning push docs gh-pages .
-```
+[docs-stable-img]: https://img.shields.io/badge/docs-stable-blue.svg
+[docs-stable-url]: https://clova-cek-sdk-python.readthedocs.io/en/stable/
