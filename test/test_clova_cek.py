@@ -18,7 +18,7 @@ import unittest
 import cek
 import json
 
-from data.requests import LAUNCH_REQUEST_BODY, INTENT_REQUEST_BODY, END_REQUEST_BODY, DEFAULT_REQUEST_BODY, GUIDE_REQUEST_BODY, NO_REQUEST_BODY
+from data.requests import LAUNCH_REQUEST_BODY, INTENT_REQUEST_BODY, END_REQUEST_BODY, DEFAULT_REQUEST_BODY, GUIDE_REQUEST_BODY, NO_REQUEST_BODY, INTENT_REQUEST_TURN_OFF
 
 speech_builder = cek.SpeechBuilder(default_language="en")
 response_builder = cek.ResponseBuilder(default_language="en")
@@ -101,6 +101,16 @@ class Test_Clova(unittest.TestCase):
 
         self.assertEqual(output_speech['type'], 'SimpleSpeech')
         self.assertEqual(output_speech['values']['value'], 'Turned on Something')
+
+    def test_end_session(self):
+        response_dict = clova_handler.route_request(request_body=INTENT_REQUEST_TURN_OFF,
+                                                    request_header_dict=mocked_header)
+        output_speech = response_dict['response']['outputSpeech']
+        should_end_session = response_dict['response']['shouldEndSession']
+
+        self.assertEqual(output_speech['type'], 'SimpleSpeech')
+        self.assertEqual(output_speech['values']['value'], 'Turned off Something')
+        self.assertEqual(should_end_session, True)
 
     def test_reprompt(self):
         response_dict = clova_handler.route_request(request_body=INTENT_REQUEST_BODY, request_header_dict=mocked_header)

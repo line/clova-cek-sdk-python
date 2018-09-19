@@ -305,7 +305,7 @@ class Clova(object):
 
         else:
             value = self._response_value(message)
-            response = self._responseBuilder.simple_speech(value)
+            response = self._responseBuilder.simple_speech(value, end_session=end_session)
 
         if reprompt is not None:
             speech = self._response_speech(reprompt)
