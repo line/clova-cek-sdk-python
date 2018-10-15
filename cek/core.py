@@ -71,6 +71,18 @@ class Request(object):
         return self.request_type == 'IntentRequest'
 
     @property
+    def event(self):
+        if not self.request_type == 'EventRequest':
+            raise TypeError("Trying to access event on a {}".format(self.request_type))
+        return self._request['event']
+
+    @property
+    def event_timestamp(self):
+        if not self.request_type == 'EventRequest':
+            raise TypeError("Trying to access timestamp on a {}".format(self.request_type))
+        return self._request['timestamp']
+
+    @property
     def user_id(self):
         return self._session['user']['userId']
 
@@ -508,8 +520,9 @@ class RequestHandler(object):
 
     def __init__(self, application_id, debug_mode=False):
         self._default_key = '_default_'
-        self._intent_key = 'IntentRequest'
         self._launch_key = 'LaunchRequest'
+        self._intent_key = 'IntentRequest'
+        self._event_key = 'EventRequest'
         self._end_key = 'SessionEndedRequest'
         self._use_debug_mode = debug_mode
         self._application_id = application_id
@@ -553,6 +566,19 @@ UwIDAQAB
             ...     return builder.simple_speech_text("こんにちは世界。スキルを起動します")
         """
         self._handlers[self._launch_key] = func
+        return func
+
+    def event(self, func):
+        """Launch handler called on EventRequest.
+
+        :param func: Function
+
+        Usage:
+            >>> @clova_handler.event
+            ... def event_request_handler(clova_request):
+            ...
+        """
+        self._handlers[self._event_key] = func
         return func
 
     def intent(self, intent):
@@ -612,10 +638,10 @@ UwIDAQAB
         request_dict = json.loads(body_string)
         request = Request(request_dict)
 
+        handler_fn = self._handlers[self._default_key]
+
         if not self._use_debug_mode:
             request.verify_application_id(self._application_id)
-
-        handler_fn = self._handlers[self._default_key]
 
         if not request.is_intent and request.request_type in self._handlers:
             handler_fn = self._handlers[request.request_type]

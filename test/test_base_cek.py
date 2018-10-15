@@ -18,7 +18,7 @@ import unittest
 from cek import Clova
 import cek
 
-from data.requests import LAUNCH_REQUEST_BODY, INTENT_REQUEST_BODY, END_REQUEST_BODY, DEFAULT_REQUEST_BODY, GUIDE_REQUEST_BODY, NO_REQUEST_BODY
+from data.requests import LAUNCH_REQUEST_BODY, INTENT_REQUEST_BODY, END_REQUEST_BODY, EVENT_REQUEST_BODY, DEFAULT_REQUEST_BODY, GUIDE_REQUEST_BODY, NO_REQUEST_BODY
 
 
 clova = Clova(application_id="com.line.myApplication", default_language="en", debug_mode=True)
@@ -39,6 +39,20 @@ def turn_on_handler(clova_request):
 @clova.handle.intent("TurnOff")
 def turn_off_handler(clova_request):
     return clova.response(message="Turned off Something", end_session=True)
+
+
+@clova.handle.event
+def event_request_handler(clova_request):
+    event = clova_request.event
+    timestamp = clova_request.event_timestamp
+
+    if event['namespace'] == 'ClovaSkill':
+        if event['name'] == 'SkillEnabled':
+            return clova.response(message="Skill has been enabled")
+        if event['name'] == 'SkillDisabled':
+            return clova.response(message="Skill has been disabled")
+
+    return clova.response(message="I don't understand this event")
 
 
 @clova.handle.end
@@ -108,6 +122,13 @@ class Test_CEKBase(unittest.TestCase):
         self.assertEqual(output_speech['values']['type'], 'PlainText')
         self.assertEqual(output_speech['values']['lang'], 'en')
         self.assertEqual(output_speech['values']['value'], 'Reprompt Message.')
+
+    def test_event_handler(self):
+        response_dict = clova.route(body=EVENT_REQUEST_BODY, header=mocked_header)
+        output_speech = response_dict['response']['outputSpeech']
+
+        self.assertEqual(output_speech['type'], 'SimpleSpeech')
+        self.assertEqual(output_speech['values']['value'], 'Skill has been disabled')
 
     def test_end_handler(self):
         response_dict = clova.route(body=END_REQUEST_BODY, header=mocked_header)
