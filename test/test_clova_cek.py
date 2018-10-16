@@ -27,12 +27,12 @@ mocked_header = {"": ""}
 
 
 @clova_handler.launch
-def launch_request_handler(clova_request):
+def launch_request_handler(launch_request):
     return response_builder.simple_speech_text("Hello! Welcome to My Service!")
 
 
 @clova_handler.intent("TurnOn")
-def turn_on_handler(clova_request):
+def turn_on_handler(intent_request):
     response = response_builder.simple_speech_text("Turned on Something")
     plain_text = speech_builder.plain_text("Reprompt Message.")
     response.reprompt = speech_builder.simple_speech(plain_text)
@@ -41,19 +41,19 @@ def turn_on_handler(clova_request):
 
 
 @clova_handler.intent("TurnOff")
-def turn_off_handler(clova_request):
+def turn_off_handler(intent_request):
     return response_builder.simple_speech_text(message="Turned off Something", end_session=True)
 
 
 @clova_handler.end
-def intent_handler(clova_request):
+def intent_handler(end_request):
     return response_builder.simple_speech_text("Bye Bye!")
 
 
 # Handles Build in Intents
 @clova_handler.intent("Clova.GuideIntent")
-def guide_intent(clova_request):
-    attributes = clova_request.session_attributes
+def guide_intent(intent_request):
+    attributes = intent_request.session.attributes
     # The session_attributes in the current response will become session_attributes in the next request
     message = "I can switch things off and on!"
     if 'HasExplainedService' in attributes:
@@ -66,17 +66,17 @@ def guide_intent(clova_request):
 
 
 @clova_handler.intent("Clova.CancelIntent")
-def cancel_intent(clova_request):
+def cancel_intent(intent_request):
     return response_builder.simple_speech_text(message="Action canceled!", end_session=True)
 
 
 @clova_handler.intent("Clova.YesIntent")
-def yes_intent(clova_request):
+def yes_intent(intent_request):
     return response_builder.simple_speech_text("Yes, thats good!")
 
 
 @clova_handler.intent("Clova.NoIntent")
-def no_intent(clova_request):
+def no_intent(intent_request):
     return response_builder.simple_speech_text(message="はい、わかりました！", language="ja")
 
 
@@ -171,10 +171,10 @@ class Test_Clova(unittest.TestCase):
     def test_application_id_verification(self):
         body_string = LAUNCH_REQUEST_BODY.decode("utf-8")
         request_dict = json.loads(body_string)
-        request = cek.Request(request_dict)
+        message = cek.Request(request_dict)
 
         try:
-            request.verify_application_id("com.line.myApplication")
+            message.verify_application_id("com.line.myApplication")
         except Exception:
             self.fail("Test for application_id_verification failed!")
 

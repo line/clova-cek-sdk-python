@@ -29,41 +29,24 @@ class Test_LaunchRequest(unittest.TestCase):
     def setUp(self):
         body_string = LAUNCH_REQUEST_BODY.decode("utf-8")
         request_dict = json.loads(body_string)
-        self.request = cek.Request(request_dict)
+        self.request = cek.Request.from_dict(request_dict)
 
     def tearDown(self):
         self.request = None
 
     def test_request_type(self):
-        request_type = self.request.request_type
+        request_type = self.request.type
 
         self.assertEqual(request_type, 'LaunchRequest')
 
-    def test_request_is_intent(self):
-        is_intent = self.request.is_intent
-
-        self.assertFalse(is_intent)
-
     def test_user_id(self):
-        user_id = self.request.user_id
+        user_id = self.request.session.user_id
 
         self.assertEqual(user_id, "U081234567890abcdef1234567890abcd")
 
     def test_session_id(self):
-        session_id = self.request.session_id
+        session_id = self.request.session.id
         self.assertEqual(session_id, "00000000-0000-0000-0000-000000000000")
-
-    def test_slot_value_raises_type_error(self):
-        with self.assertRaises(TypeError):
-            self.request.slot_value("example")
-
-    def test_slots_dict_raises_type_error(self):
-        with self.assertRaises(TypeError):
-            self.request.slots_dict
-
-    def test_intent_name_raises_type_error(self):
-        with self.assertRaises(TypeError):
-            self.request.intent_name
 
 
 if __name__ == '__main__':

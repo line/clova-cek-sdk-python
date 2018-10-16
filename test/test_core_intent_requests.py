@@ -28,33 +28,28 @@ class Test_IntentRequest(unittest.TestCase):
         body_string = INTENT_REQUEST_BODY.decode("utf-8")
         request_dict = json.loads(body_string)
 
-        self.request = cek.Request(request_dict)
+        self.request = cek.Request.from_dict(request_dict)
 
     def tearDown(self):
         self.request = None
 
     def test_request_type(self):
-        request_type = self.request.request_type
+        request_type = self.request.type
 
         self.assertEqual(request_type, 'IntentRequest')
 
     def test_intent_name(self):
-        intent_name = self.request.intent_name
+        intent_name = self.request.name
 
         self.assertEqual(intent_name, "TurnOn")
 
-    def test_request_is_intent(self):
-        is_intent = self.request.is_intent
-
-        self.assertTrue(is_intent)
-
     def test_user_id(self):
-        user_id = self.request.user_id
+        user_id = self.request.session.user_id
 
         self.assertEqual(user_id, "1111111111111111111111")
 
     def test_session_id(self):
-        session_id = self.request.session_id
+        session_id = self.request.session.id
 
         self.assertEqual(session_id, "55555555-5555-5555-5555-555555555555")
 
@@ -72,8 +67,6 @@ class Test_IntentRequest(unittest.TestCase):
         expected_light_value = u'電気'
         self.assertEqual(slots, expected_slots)
         self.assertEqual(light_value, expected_light_value)
-
-
 
 
 if __name__ == '__main__':

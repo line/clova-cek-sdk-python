@@ -132,7 +132,7 @@ EVENT_REQUEST_BODY = b"""{
     "event": {
       "name": "SkillDisabled",
       "namespace": "ClovaSkill",
-      "payload": "null"
+      "payload": null
     },
     "requestId": "12345678-aaaa-bbbb-cccc-1234567890ab",
     "timestamp": "2018-04-04T04:04:04Z",

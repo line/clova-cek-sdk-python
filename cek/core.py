@@ -34,10 +34,35 @@ def validate_language(lang):
     return lang
 
 
+class Session(object):
+    def __init__(self, session_dict):
+        self._session = session_dict
+
+    @property
+    def id(self):
+        return self._session['sessionId']
+
+    @property
+    def is_new(self):
+        return self._session['new']
+
+    @property
+    def attributes(self):
+        return self._session.get('sessionAttributes', {})
+
+    @property
+    def user_id(self):
+        return self._session['user']['userId']
+
+    @property
+    def user_access_token(self):
+        return self._session['user']['accessToken']
+
+
 class Request(object):
     """Type represents a request from CEK
 
-    :param dict request_dict: Dictioanry represents a request from CEK
+    :param dict request_dict: Dictionary represents a request from CEK
 
     :ivar str request_type: can be LaunchRequest, IntentRequest, etc.
     :ivar str intent_name: name of intent if exist, otherwise None.
@@ -54,78 +79,31 @@ class Request(object):
         self._request = request_dict['request']
         self._session = request_dict['session']
         self._context = request_dict['context']
+
+        self.session = Session(request_dict['session'])
         self.version = request_dict['version']
 
+    @classmethod
+    def from_dict(cls, request_dict):
+        request_type = request_dict['request']['type']
+        if request_type == 'IntentRequest':
+            return IntentRequest(request_dict)
+        elif request_type == 'EventRequest':
+            return EventRequest(request_dict)
+        elif request_type == 'LaunchRequest':
+            return LaunchRequest(request_dict)
+        elif request_type == 'SessionEndedRequest':
+            return EndRequest(request_dict)
+        else:
+            raise ValueError("Request Type not supported.")
+
     @property
-    def request_type(self):
+    def type(self):
         return self._request['type']
-
-    @property
-    def intent_name(self):
-        if not self.is_intent:
-            raise TypeError("Trying to access intent_name on a {}".format(self.request_type))
-        return self._request['intent']['name']
-
-    @property
-    def is_intent(self):
-        return self.request_type == 'IntentRequest'
-
-    @property
-    def event(self):
-        if not self.request_type == 'EventRequest':
-            raise TypeError("Trying to access event on a {}".format(self.request_type))
-        return self._request['event']
-
-    @property
-    def event_timestamp(self):
-        if not self.request_type == 'EventRequest':
-            raise TypeError("Trying to access timestamp on a {}".format(self.request_type))
-        return self._request['timestamp']
-
-    @property
-    def user_id(self):
-        return self._session['user']['userId']
 
     @property
     def application_id(self):
         return self._context['System']['application']['applicationId']
-
-    @property
-    def access_token(self):
-        return self._session['user'].get('accessToken')
-
-    @property
-    def session_id(self):
-        return self._session['sessionId']
-
-    @property
-    def session_attributes(self):
-        return self._session.get('sessionAttributes', {})
-
-    def slot_value(self, slot_name):
-        """Returns slot value or None if missing.
-
-        :param str slot_name: slot name
-        :returns: slot value if exists, None otherwise.
-        :rtype: str
-        :raises: TypeError: if the request is not an IntentRequest
-
-        Usage:
-          >>> req.slot_value('Light')
-          '電気'
-        """
-        if not self.is_intent:
-            raise TypeError("Trying to access slots on a {}".format(self.request_type))
-        slots = self._request['intent']['slots']
-        if slots is not None and slot_name in slots:
-            return slots[slot_name]['value']
-
-    @property
-    def slots_dict(self):
-        if not self.is_intent:
-            raise TypeError("Trying to access slots on a {}".format(self.request_type))
-        slots = self._request['intent']['slots']
-        return {slot_name: slots[slot_name]['value'] for slot_name in slots}
 
     def verify_application_id(self, application_id):
         """Verify application id
@@ -135,6 +113,58 @@ class Request(object):
         if self.application_id != application_id:
             raise RuntimeError(
                 "Request contains wrong ApplicationId:{}. This request was not meant to be sent to this Application.".format(application_id))
+
+
+class LaunchRequest(Request):
+    pass
+
+class EndRequest(Request):
+    pass
+
+class IntentRequest(Request):
+
+    @property
+    def name(self):
+        return self._request['intent']['name']
+
+    @property
+    def slots_dict(self):
+        slots = self._request['intent']['slots']
+        return {slot_name: slots[slot_name]['value'] for slot_name in slots}
+
+    def slot_value(self, slot_name):
+        """Returns slot value or None if missing.
+
+        :param str slot_name: slot name
+        :returns: slot value if exists, None otherwise.
+        :rtype: str
+
+        Usage:
+          >>> intent.slot_value('Light')
+          '電気'
+        """
+        slots = self._request['intent']['slots']
+        if slots is not None and slot_name in slots:
+            return slots[slot_name]['value']
+
+
+class EventRequest(Request):
+
+    @property
+    def id(self):
+        return self._request['requestId']
+
+    @property
+    def name(self):
+        return self._request['event']['name']
+
+    @property
+    def namespace(self):
+        return self._request['event']['namespace']
+
+    @property
+    def timestamp(self):
+        return self._request['timestamp']
 
 
 class Response(dict):
@@ -332,7 +362,7 @@ class ResponseBuilder(object):
     def simple_speech_text(self, message, language=None, end_session=False):
         """ Build SimpleSpeech response with plain_text value
 
-        :param str message: String Message which clova should speak out
+        :param str message: String Request which clova should speak out
         :param str language: Language code of the message
         :param bool end_session: Whether Clova should continue to listen or end the session
         :return: Response that wraps a Dictionary in the format of a response for a SimpleSpeech
@@ -569,7 +599,7 @@ UwIDAQAB
         return func
 
     def event(self, func):
-        """Launch handler called on EventRequest.
+        """Event handler called on EventRequest.
 
         :param func: Function
 
@@ -636,17 +666,19 @@ UwIDAQAB
 
         body_string = request_body.decode("utf-8")
         request_dict = json.loads(body_string)
-        request = Request(request_dict)
 
         handler_fn = self._handlers[self._default_key]
+
+        request = Request.from_dict(request_dict)
 
         if not self._use_debug_mode:
             request.verify_application_id(self._application_id)
 
-        if not request.is_intent and request.request_type in self._handlers:
-            handler_fn = self._handlers[request.request_type]
-        elif request.is_intent and request.intent_name in self._handlers[self._intent_key]:
-            handler_fn = self._handlers[self._intent_key][request.intent_name]
+        is_intent_request = isinstance(request, IntentRequest)
+        if is_intent_request and request.name in self._handlers[self._intent_key]:
+            handler_fn = self._handlers[self._intent_key][request.name]
+        elif not is_intent_request and request.type in self._handlers:
+            handler_fn = self._handlers[request.type]
 
         return handler_fn(request)
 

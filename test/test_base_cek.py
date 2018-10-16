@@ -27,33 +27,29 @@ mocked_header = {"": ""}
 
 
 @clova.handle.launch
-def launch_request_handler(clova_request):
+def launch_request_handler(launch_request):
     return clova.response("Hello! Welcome to my Service!")
 
 
 @clova.handle.intent("TurnOn")
-def turn_on_handler(clova_request):
+def turn_on_handler(intent_request):
     return clova.response(message="Turned on Something!", reprompt="Reprompt Message.")
 
 
 @clova.handle.intent("TurnOff")
-def turn_off_handler(clova_request):
+def turn_off_handler(intent_request):
     return clova.response(message="Turned off Something", end_session=True)
 
 
 @clova.handle.event
-def event_request_handler(clova_request):
-    event = clova_request.event
-    timestamp = clova_request.event_timestamp
+def event_request_handler(event_request):
+    event = event_request
 
-    if event['namespace'] == 'ClovaSkill':
-        if event['name'] == 'SkillEnabled':
-            return clova.response(message="Skill has been enabled")
-        if event['name'] == 'SkillDisabled':
-            return clova.response(message="Skill has been disabled")
-
-    return clova.response(message="I don't understand this event")
-
+    if event.namespace == 'ClovaSkill':
+        if event.name == 'SkillEnabled':
+            pass
+        if event.name == 'SkillDisabled':
+            pass
 
 @clova.handle.end
 def intent_handler(clova_request):
@@ -62,8 +58,8 @@ def intent_handler(clova_request):
 
 # Handles Build in Intents
 @clova.handle.intent("Clova.GuideIntent")
-def guide_intent(clova_request):
-    attributes = clova_request.session_attributes
+def guide_intent(intent_request):
+    attributes = intent_request.session.attributes
     # The session_attributes in the current response will become session_attributes in the next request
     message = "I can switch things off and on!"
     if 'HasExplainedService' in attributes:
@@ -76,17 +72,17 @@ def guide_intent(clova_request):
 
 
 @clova.handle.intent("Clova.CancelIntent")
-def cancel_intent(clova_request):
+def cancel_intent(intent_request):
     return clova.response(message="Action canceled!", end_session=True)
 
 
 @clova.handle.intent("Clova.YesIntent")
-def yes_intent(clova_request):
+def yes_intent(intent_request):
     return clova.response("Yes, that's good!")
 
 
 @clova.handle.intent("Clova.NoIntent")
-def no_intent(clova_request):
+def no_intent(intent_request):
     cek_message = cek.Message(message="はい、わかりました！", language="ja")
     return clova.response(cek_message)
 
@@ -124,11 +120,9 @@ class Test_CEKBase(unittest.TestCase):
         self.assertEqual(output_speech['values']['value'], 'Reprompt Message.')
 
     def test_event_handler(self):
-        response_dict = clova.route(body=EVENT_REQUEST_BODY, header=mocked_header)
-        output_speech = response_dict['response']['outputSpeech']
+        response = clova.route(body=EVENT_REQUEST_BODY, header=mocked_header)
 
-        self.assertEqual(output_speech['type'], 'SimpleSpeech')
-        self.assertEqual(output_speech['values']['value'], 'Skill has been disabled')
+        self.assertIsNone(response)
 
     def test_end_handler(self):
         response_dict = clova.route(body=END_REQUEST_BODY, header=mocked_header)
