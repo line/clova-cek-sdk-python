@@ -59,6 +59,36 @@ class Session(object):
         return self._session['user']['accessToken']
 
 
+class Device(object):
+    def __init__(self, device_dict):
+        self._device = device_dict
+
+    @property
+    def id(self):
+        return self._device['deviceId']
+
+
+class Context(object):
+    def __init__(self, context_dict):
+        self._context = context_dict
+
+    @property
+    def audio_player(self):
+        return self._context['AudioPlayer']
+
+    @property
+    def device(self):
+        return Device(self._context['device'])
+
+    @property
+    def user_id(self):
+        return self._context['System']['user']['userId']
+
+    @property
+    def user_access_token(self):
+        return self._context['System']['user']['accessToken']
+
+
 class Request(object):
     """Type represents a request from CEK
 
@@ -102,6 +132,10 @@ class Request(object):
         return self._request['type']
 
     @property
+    def context(self):
+        return Context(self._context)
+
+    @property
     def application_id(self):
         return self._context['System']['application']['applicationId']
 
@@ -118,8 +152,10 @@ class Request(object):
 class LaunchRequest(Request):
     pass
 
+
 class EndRequest(Request):
     pass
+
 
 class IntentRequest(Request):
 
@@ -165,6 +201,10 @@ class EventRequest(Request):
     @property
     def timestamp(self):
         return self._request['timestamp']
+
+    @property
+    def payload(self):
+        return self._request['event']['payload']
 
 
 class Response(dict):
