@@ -28,6 +28,11 @@ from cryptography.hazmat.backends import default_backend
 supported_languages = ['en', 'ja', 'ko']
 
 
+class ApplicationIdMismatch(Exception):
+    """ Application Id does not match """
+    pass
+
+
 def validate_language(lang):
     if lang not in supported_languages:
         raise ValueError('Lang: "{}" is not supported. Currently supported languages are en, ja and ko.'.format(lang))
@@ -35,6 +40,17 @@ def validate_language(lang):
 
 
 class Session(object):
+    """Type which holds details about each users session.
+
+        :param dict session_dict: Dictionary represents the session field from the CEK request
+
+        :ivar str id: is the session id.
+        :ivar bool is_new: distinguishes whether the request message is for a new session or the existing session.
+        :ivar dict attributes: used in multi-turn dialogue and contains the information set in previous response.sessionAttributes.
+        :ivar str user_id: Clova ID of the current user connected to the device. Can be different from context.user_id.
+        :ivar str user_access_token: Access token of the the current user connected to the device. Can be different from context.user_access_token.
+    """
+
     def __init__(self, session_dict):
         self._session = session_dict
 
@@ -48,7 +64,7 @@ class Session(object):
 
     @property
     def attributes(self):
-        return self._session.get('sessionAttributes', {})
+        return self._session.setdefault('sessionAttributes', {})
 
     @property
     def user_id(self):
@@ -68,13 +84,57 @@ class Device(object):
         return self._device['deviceId']
 
 
+class AudioPlayer(object):
+    """Type which holds details of the media content currently being played or played last.
+
+    :param dict audio_player_dict: Dictionary represents the AudioPlayer field from the CEK request
+
+    :ivar num offset: is the most recent playback position of the recently played media in milliseconds.
+    :ivar num total: is the total duration of the recently played media in milliseconds.
+    :ivar str activity: is indicating the state of player. Can be "IDLE", "PLAYING", "PAUSED" or "STOPPED"
+    :ivar dict stream: contains details of the currently playing media. TODO: AudioStreamInfoObject specs are still wip
+    """
+
+    def __init__(self, audio_player_dict):
+        self._audio_player = audio_player_dict
+
+    @property
+    def offset(self):
+        return self._audio_player.get('offsetInMilliseconds', 0)
+
+    @property
+    def total(self):
+        return self._audio_player.get('totalInMilliseconds', 0)
+
+    @property
+    def activity(self):
+        return self._audio_player['playerActivity']
+
+    @property
+    def stream(self):
+        return self._audio_player.get('stream', None)
+
+
 class Context(object):
+    """Type which holds context information of the client.
+
+    :param dict context_dict: Dictionary represents the context from a CEK request
+
+    :ivar AudioPlayer audio_player: holds details of media content currently being played or played last. Can be None if empty.
+    :ivar Device device: contains information of the client device.
+    :ivar str user_id: Clova ID of the device default user.
+    :ivar str user_access_token: Access token of the default user connected with the device.
+    """
+
     def __init__(self, context_dict):
         self._context = context_dict
 
     @property
     def audio_player(self):
-        return self._context['AudioPlayer']
+        if 'AudioPlayer' in self._context:
+            return AudioPlayer(self._context['AudioPlayer'])
+        else:
+            return None
 
     @property
     def device(self):
@@ -94,15 +154,11 @@ class Request(object):
 
     :param dict request_dict: Dictionary represents a request from CEK
 
-    :ivar str request_type: can be LaunchRequest, IntentRequest, etc.
-    :ivar str intent_name: name of intent if exist, otherwise None.
-    :ivar str is_intent: IntentRequest or not.
-    :ivar str user_id: user id.
+
+    :ivar str type: type of request. Can be IntentRequest, EventRequest, LaunchRequest, SessionEndedRequest
+
+    :ivar Context context: context of the current request from CEK.
     :ivar str application_id: application id.
-    :ivar str access_token: access token.
-    :ivar str session_id: session id.
-    :ivar dict session_attributes: session attributes.
-    :ivar dict slots_dict: slots as dictionary
     """
 
     def __init__(self, request_dict):
@@ -115,6 +171,11 @@ class Request(object):
 
     @classmethod
     def from_dict(cls, request_dict):
+        """
+        Factory method to create correct Response depending on request type
+
+        :param dict request_dict: Dictionary represents a request from CEK
+        """
         request_type = request_dict['request']['type']
         if request_type == 'IntentRequest':
             return IntentRequest(request_dict)
@@ -142,22 +203,29 @@ class Request(object):
     def verify_application_id(self, application_id):
         """Verify application id
 
-        :raises RuntimeError: if application id is incorrect.
+        :raises ApplicationIdMismatch: if application id is incorrect.
         """
         if self.application_id != application_id:
-            raise RuntimeError(
+            raise ApplicationIdMismatch(
                 "Request contains wrong ApplicationId:{}. This request was not meant to be sent to this Application.".format(application_id))
 
 
 class LaunchRequest(Request):
+    """Type represents a LaunchRequest from CEK"""
     pass
 
 
 class EndRequest(Request):
+    """Type represents an EndRequest from CEK"""
     pass
 
 
 class IntentRequest(Request):
+    """Type represents an IntentRequest from CEK
+
+    :ivar str name: name of the intent
+    :ivar dict slots_dict: slot values as dictionary.
+    """
 
     @property
     def name(self):
@@ -185,6 +253,11 @@ class IntentRequest(Request):
 
 
 class EventRequest(Request):
+    """Type represents an EventRequest from CEK
+
+    :ivar str id: is the event id
+    :ivar dict slots_dict: slot values as dictionary.
+    """
 
     @property
     def id(self):
@@ -688,7 +761,7 @@ UwIDAQAB
         :return: Returns body for CEK response
         :rtype: cek.core.Response
         :raises cryptography.exceptions.InvalidSignature: (non-debug mode only) if request verification failed.
-        :raises RuntimeError: (non-debug mode only) if application id is incorrect.
+        :raises cek.ApplicationIdMismatch: (non-debug mode only) if application id is incorrect.
 
         Usage:
             >>> from flask import Flask, request, Response
@@ -715,9 +788,10 @@ UwIDAQAB
             request.verify_application_id(self._application_id)
 
         is_intent_request = isinstance(request, IntentRequest)
-        if is_intent_request and request.name in self._handlers[self._intent_key]:
-            handler_fn = self._handlers[self._intent_key][request.name]
-        elif not is_intent_request and request.type in self._handlers:
+        if is_intent_request:
+            if request.name in self._handlers[self._intent_key]:
+                handler_fn = self._handlers[self._intent_key][request.name]
+        elif request.type in self._handlers:
             handler_fn = self._handlers[request.type]
 
         return handler_fn(request)

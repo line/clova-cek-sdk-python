@@ -171,10 +171,10 @@ class Test_Clova(unittest.TestCase):
     def test_application_id_verification(self):
         body_string = LAUNCH_REQUEST_BODY.decode("utf-8")
         request_dict = json.loads(body_string)
-        message = cek.Request(request_dict)
+        request = cek.Request(request_dict)
 
         try:
-            message.verify_application_id("com.line.myApplication")
+            request.verify_application_id("com.line.myApplication")
         except Exception:
             self.fail("Test for application_id_verification failed!")
 
@@ -183,7 +183,7 @@ class Test_Clova(unittest.TestCase):
         request_dict = json.loads(body_string)
         request = cek.Request(request_dict)
 
-        with self.assertRaises(RuntimeError):
+        with self.assertRaises(cek.ApplicationIdMismatch):
             request.verify_application_id("com.line.wrongApplication")
 
     def test_wrong_language(self):
