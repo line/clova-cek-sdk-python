@@ -43,7 +43,7 @@ def turn_off_handler(intent_request):
 
 @clova.handle.event
 def event_request_handler(event_request):
-    event = event_request
+    event = event_request.event
 
     if event.namespace == 'ClovaSkill':
         if event.name == 'SkillEnabled':

@@ -39,6 +39,26 @@ def validate_language(lang):
     return lang
 
 
+class User(object):
+    """Type which holds details about user.
+
+        :param dict user_dict: Dictionary represents the user field from the CEK request
+
+        :ivar str id: Clova ID of the user.
+        :ivar str access_token: Access token of the user.
+    """
+    def __init__(self, user_dict):
+        self._user = user_dict
+
+    @property
+    def id(self):
+        return self._user['userId']
+
+    @property
+    def access_token(self):
+        return self._user['accessToken']
+
+
 class Session(object):
     """Type which holds details about each users session.
 
@@ -47,8 +67,7 @@ class Session(object):
         :ivar str id: is the session id.
         :ivar bool is_new: distinguishes whether the request message is for a new session or the existing session.
         :ivar dict attributes: used in multi-turn dialogue and contains the information set in previous response.sessionAttributes.
-        :ivar str user_id: Clova ID of the current user connected to the device. Can be different from context.user_id.
-        :ivar str user_access_token: Access token of the the current user connected to the device. Can be different from context.user_access_token.
+        :ivar User user: Current user connected to the device. Can be different from context.user.
     """
 
     def __init__(self, session_dict):
@@ -67,15 +86,18 @@ class Session(object):
         return self._session.setdefault('sessionAttributes', {})
 
     @property
-    def user_id(self):
-        return self._session['user']['userId']
-
-    @property
-    def user_access_token(self):
-        return self._session['user']['accessToken']
+    def user(self):
+        return User(self._session['user'])
 
 
 class Device(object):
+    """Type which holds details about user.
+
+        :param dict device_dict: Dictionary represents the device field from the CEK request
+
+        :ivar str id: ID of the device.
+    """
+
     def __init__(self, device_dict):
         self._device = device_dict
 
@@ -122,8 +144,7 @@ class Context(object):
 
     :ivar AudioPlayer audio_player: holds details of media content currently being played or played last. Can be None if empty.
     :ivar Device device: contains information of the client device.
-    :ivar str user_id: Clova ID of the device default user.
-    :ivar str user_access_token: Access token of the default user connected with the device.
+    :ivar User user: default User of the device.
     """
 
     def __init__(self, context_dict):
@@ -141,12 +162,8 @@ class Context(object):
         return Device(self._context['device'])
 
     @property
-    def user_id(self):
-        return self._context['System']['user']['userId']
-
-    @property
-    def user_access_token(self):
-        return self._context['System']['user']['accessToken']
+    def user(self):
+        return User(self._context['System']['user'])
 
 
 class Request(object):
@@ -255,8 +272,9 @@ class IntentRequest(Request):
 class EventRequest(Request):
     """Type represents an EventRequest from CEK
 
-    :ivar str id: is the event id
-    :ivar dict slots_dict: slot values as dictionary.
+    :ivar str id: is the dialog request id
+    :ivar Event event: stores the information sent by the client to Clova.
+    :ivar str timestamp: of when the client sends information to Clova (ISO 8601)
     """
 
     @property
@@ -264,20 +282,36 @@ class EventRequest(Request):
         return self._request['requestId']
 
     @property
-    def name(self):
-        return self._request['event']['name']
-
-    @property
-    def namespace(self):
-        return self._request['event']['namespace']
+    def event(self):
+        return Event(self._request['event'])
 
     @property
     def timestamp(self):
         return self._request['timestamp']
 
+
+class Event(object):
+    """Type represents the stored information sent by the client to Clova.
+
+    :ivar str name: is the name of the event message sent by the client to Clova
+    :ivar str namespace: is the namespace of the event message.
+    :ivar objc payload: is the payload or partial payload of the event message sent by the client to Clova.
+    """
+
+    def __init__(self, event_dict):
+        self._event_dict = event_dict
+
+    @property
+    def name(self):
+        return self._event_dict['name']
+
+    @property
+    def namespace(self):
+        return self._event_dict['namespace']
+
     @property
     def payload(self):
-        return self._request['event']['payload']
+        return self._event_dict['payload']
 
 
 class Response(dict):

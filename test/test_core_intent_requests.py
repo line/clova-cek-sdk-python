@@ -44,7 +44,7 @@ class Test_IntentRequest(unittest.TestCase):
         self.assertEqual(intent_name, "TurnOn")
 
     def test_user_id(self):
-        user_id = self.request.session.user_id
+        user_id = self.request.session.user.id
 
         self.assertEqual(user_id, "1111111111111111111111")
 

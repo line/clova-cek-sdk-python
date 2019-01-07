@@ -40,7 +40,7 @@ class Test_LaunchRequest(unittest.TestCase):
         self.assertEqual(request_type, 'LaunchRequest')
 
     def test_user_id(self):
-        user_id = self.request.session.user_id
+        user_id = self.request.session.user.id
 
         self.assertEqual(user_id, "U081234567890abcdef1234567890abcd")
 
