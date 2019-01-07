@@ -171,12 +171,15 @@ class Request(object):
 
     :param dict request_dict: Dictionary represents a request from CEK
 
-
     :ivar str type: type of request. Can be IntentRequest, EventRequest, LaunchRequest, SessionEndedRequest
-
     :ivar Context context: context of the current request from CEK.
     :ivar str application_id: application id.
     """
+
+    launch_key = 'LaunchRequest'
+    intent_key = 'IntentRequest'
+    event_key = 'EventRequest'
+    end_key = 'SessionEndedRequest'
 
     def __init__(self, request_dict):
         self._request = request_dict['request']
@@ -186,6 +189,7 @@ class Request(object):
         self.session = Session(request_dict['session'])
         self.version = request_dict['version']
 
+
     @classmethod
     def from_dict(cls, request_dict):
         """
@@ -194,13 +198,13 @@ class Request(object):
         :param dict request_dict: Dictionary represents a request from CEK
         """
         request_type = request_dict['request']['type']
-        if request_type == 'IntentRequest':
+        if request_type == cls.intent_key:
             return IntentRequest(request_dict)
-        elif request_type == 'EventRequest':
+        elif request_type == cls.event_key:
             return EventRequest(request_dict)
-        elif request_type == 'LaunchRequest':
+        elif request_type == cls.launch_key:
             return LaunchRequest(request_dict)
-        elif request_type == 'SessionEndedRequest':
+        elif request_type == cls.end_key:
             return EndRequest(request_dict)
         else:
             raise ValueError("Request Type not supported.")
@@ -697,10 +701,6 @@ class RequestHandler(object):
 
     def __init__(self, application_id, debug_mode=False):
         self._default_key = '_default_'
-        self._launch_key = 'LaunchRequest'
-        self._intent_key = 'IntentRequest'
-        self._event_key = 'EventRequest'
-        self._end_key = 'SessionEndedRequest'
         self._use_debug_mode = debug_mode
         self._application_id = application_id
 
@@ -717,7 +717,7 @@ UwIDAQAB
 """
         self._public_key = load_pem_public_key(__cek_public_key_data, backend=default_backend())
 
-        self._handlers = {self._intent_key: {}}
+        self._handlers = {Request.intent_key: {}}
 
     def default(self, func):
         """Default handler
@@ -742,7 +742,7 @@ UwIDAQAB
             ... def launch_request_handler(clova_request):
             ...     return builder.simple_speech_text("こんにちは世界。スキルを起動します")
         """
-        self._handlers[self._launch_key] = func
+        self._handlers[Request.launch_key] = func
         return func
 
     def event(self, func):
@@ -755,7 +755,7 @@ UwIDAQAB
             ... def event_request_handler(clova_request):
             ...
         """
-        self._handlers[self._event_key] = func
+        self._handlers[Request.event_key] = func
         return func
 
     def intent(self, intent):
@@ -769,7 +769,7 @@ UwIDAQAB
             ...     return builder.simple_speech_text("はい、わかりました。")
         """
         def _handler(func):
-            self._handlers[self._intent_key][intent] = func
+            self._handlers[Request.intent_key][intent] = func
             return func
         return _handler
 
@@ -784,7 +784,7 @@ UwIDAQAB
             ...     # Session ended, this handler can be used to clean up
             ...     return
         """
-        self._handlers[self._end_key] = func
+        self._handlers[Request.end_key] = func
         return func
 
     def route_request(self, request_body, request_header_dict):
@@ -823,8 +823,8 @@ UwIDAQAB
 
         is_intent_request = isinstance(request, IntentRequest)
         if is_intent_request:
-            if request.name in self._handlers[self._intent_key]:
-                handler_fn = self._handlers[self._intent_key][request.name]
+            if request.name in self._handlers[Request.intent_key]:
+                handler_fn = self._handlers[Request.intent_key][request.name]
         elif request.type in self._handlers:
             handler_fn = self._handlers[request.type]
 
