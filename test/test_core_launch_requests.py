@@ -29,7 +29,7 @@ class Test_LaunchRequest(unittest.TestCase):
     def setUp(self):
         body_string = LAUNCH_REQUEST_BODY.decode("utf-8")
         request_dict = json.loads(body_string)
-        self.request = cek.Request.from_dict(request_dict)
+        self.request = cek.Request.create(request_dict)
 
     def tearDown(self):
         self.request = None

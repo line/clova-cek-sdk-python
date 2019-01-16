@@ -187,7 +187,7 @@ class Test_Clova(unittest.TestCase):
             request.verify_application_id("com.line.wrongApplication")
 
     def test_wrong_language(self):
-        # Tets builders
+        # Test builders
         for lang in ["es", "jp"]:
             with self.assertRaises(ValueError):
                 cek.ResponseBuilder(default_language=lang)

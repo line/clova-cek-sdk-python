@@ -51,6 +51,7 @@ def event_request_handler(event_request):
         if event.name == 'SkillDisabled':
             pass
 
+
 @clova.handle.end
 def intent_handler(clova_request):
     return clova.response("Bye Bye!")
