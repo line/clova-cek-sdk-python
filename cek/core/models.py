@@ -143,13 +143,14 @@ class Context(object):
         self._context = context_dict
         self._user = User(context_dict['System']['user'])
         self._device = Device(context_dict['device'])
+        if 'AudioPlayer' in context_dict:
+            self._audioPlayer = AudioPlayer(context_dict['AudioPlayer'])
+        else:
+            self._audioPlayer = None
 
     @property
     def audio_player(self):
-        if 'AudioPlayer' in self._context:
-            return AudioPlayer(self._context['AudioPlayer'])
-        else:
-            return None
+        return self._audioPlayer
 
     @property
     def device(self):
