@@ -18,7 +18,7 @@ import unittest
 from cek import Clova
 import cek
 
-from data.requests import LAUNCH_REQUEST_BODY, INTENT_REQUEST_BODY, END_REQUEST_BODY, EVENT_REQUEST_BODY, DEFAULT_REQUEST_BODY, GUIDE_REQUEST_BODY, NO_REQUEST_BODY
+from data.requests import LAUNCH_REQUEST_BODY, INTENT_REQUEST_BODY, END_REQUEST_BODY, EVENT_REQUEST_BODY, AUDIOPLAYER_EVENT_REQUEST_BODY, DEFAULT_REQUEST_BODY, GUIDE_REQUEST_BODY, NO_REQUEST_BODY
 
 
 clova = Clova(application_id="com.line.myApplication", default_language="en", debug_mode=True)
@@ -50,6 +50,15 @@ def event_request_handler(event_request):
             pass
         if event.name == 'SkillDisabled':
             pass
+    elif event.namespace == 'AudioPlayer':
+        if event.name == 'PlayStopped':
+            player = event_request.context.audio_player
+            if player.activity == 'STOPPED':
+                pass
+            else:
+                assert False, "Invalid request state for event PlayStopped."
+    else:
+        assert False, "Doesn't handle all events."
 
 
 @clova.handle.end
@@ -122,6 +131,11 @@ class Test_CEKBase(unittest.TestCase):
 
     def test_event_handler(self):
         response = clova.route(body=EVENT_REQUEST_BODY, header=mocked_header)
+
+        self.assertIsNone(response)
+
+    def test_event_handler_audio_player(self):
+        response = clova.route(body=AUDIOPLAYER_EVENT_REQUEST_BODY, header=mocked_header)
 
         self.assertIsNone(response)
 
@@ -268,7 +282,7 @@ class Test_CEKBase(unittest.TestCase):
         self.assertEqual(reprompt_output_speech['values']['value'], 'Are you still there?')
 
     def test_wrong_language(self):
-        # Tets builders
+        # Test builders
         for lang in ["es", "jp"]:
             with self.assertRaises(ValueError):
                 clova.response(cek.Message("Hola", lang))

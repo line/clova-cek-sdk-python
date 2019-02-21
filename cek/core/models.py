@@ -142,7 +142,7 @@ class Context(object):
     def __init__(self, context_dict):
         self._context = context_dict
         self._user = User(context_dict['System']['user'])
-        self._device = Device(context_dict['device'])
+        self._device = Device(context_dict['System']['device'])
         if 'AudioPlayer' in context_dict:
             self._audioPlayer = AudioPlayer(context_dict['AudioPlayer'])
         else:
