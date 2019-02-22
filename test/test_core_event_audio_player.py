@@ -19,13 +19,13 @@ import unittest
 import cek
 
 import json
-from data.requests import EVENT_REQUEST_BODY
+from data.requests import AUDIOPLAYER_EVENT_REQUEST_BODY
 
 
 class Test_IntentRequest(unittest.TestCase):
 
     def setUp(self):
-        body_string = EVENT_REQUEST_BODY.decode("utf-8")
+        body_string = AUDIOPLAYER_EVENT_REQUEST_BODY.decode("utf-8")
         request_dict = json.loads(body_string)
         self.request = cek.Request.create(request_dict)
 
@@ -35,25 +35,33 @@ class Test_IntentRequest(unittest.TestCase):
     def test_request_id(self):
         request_id = self.request.id
 
-        self.assertEqual(request_id, '12345678-aaaa-bbbb-cccc-1234567890ab')
+        self.assertEqual(request_id, 'e5464288-50ff-4e99-928d-4a301e083d41')
 
     def test_request_event(self):
         event = self.request.event
 
-        self.assertEqual(event.namespace, 'ClovaSkill')
-        self.assertEqual(event.name, 'SkillDisabled')
-        self.assertIsNone(event.payload)
+        self.assertEqual(event.namespace, 'AudioPlayer')
+        self.assertEqual(event.name, 'PlayStopped')
+        self.assertTrue(len(event.payload) == 0)
 
     def test_request_timestamp(self):
         timestamp = self.request.timestamp
 
-        self.assertEqual(timestamp, '2018-04-04T04:04:04Z')
+        self.assertEqual(timestamp, '2017-09-05T05:41:21Z')
+
+    def test_request_context_player(self):
+        context = self.request.context
+        player = context.audio_player
+
+        self.assertEqual(player.offset, 12734)
+        self.assertEqual(player.total, 52734)
+        self.assertEqual(player.activity, "STOPPED")
 
     def test_request_context_device(self):
         context = self.request.context
         device = context.device
 
-        self.assertEqual(device.id, "1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef")
+        self.assertEqual(device.id, "dddddddd-dddd-dddd-dddd-dddddddddddd")
 
 
 if __name__ == '__main__':

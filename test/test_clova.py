@@ -53,10 +53,7 @@ def event_request_handler(event_request):
     elif event.namespace == 'AudioPlayer':
         if event.name == 'PlayStopped':
             player = event_request.context.audio_player
-            if player.activity == 'STOPPED':
-                pass
-            else:
-                assert False, "Invalid request state for event PlayStopped."
+            assert player.activity == 'STOPPED', "Invalid request state for event PlayStopped."
     else:
         assert False, "Doesn't handle all events."
 
