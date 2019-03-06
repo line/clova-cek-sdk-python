@@ -18,7 +18,7 @@ import unittest
 from cek import Clova
 import cek
 
-from data.requests import LAUNCH_REQUEST_BODY, INTENT_REQUEST_BODY, END_REQUEST_BODY, DEFAULT_REQUEST_BODY, GUIDE_REQUEST_BODY, NO_REQUEST_BODY
+from data.requests import LAUNCH_REQUEST_BODY, INTENT_REQUEST_BODY, END_REQUEST_BODY, EVENT_REQUEST_BODY, AUDIOPLAYER_EVENT_REQUEST_BODY, DEFAULT_REQUEST_BODY, GUIDE_REQUEST_BODY, NO_REQUEST_BODY
 
 
 clova = Clova(application_id="com.line.myApplication", default_language="en", debug_mode=True)
@@ -27,18 +27,35 @@ mocked_header = {"": ""}
 
 
 @clova.handle.launch
-def launch_request_handler(clova_request):
+def launch_request_handler(launch_request):
     return clova.response("Hello! Welcome to my Service!")
 
 
 @clova.handle.intent("TurnOn")
-def turn_on_handler(clova_request):
+def turn_on_handler(intent_request):
     return clova.response(message="Turned on Something!", reprompt="Reprompt Message.")
 
 
 @clova.handle.intent("TurnOff")
-def turn_off_handler(clova_request):
+def turn_off_handler(intent_request):
     return clova.response(message="Turned off Something", end_session=True)
+
+
+@clova.handle.event
+def event_request_handler(event_request):
+    event = event_request.event
+
+    if event.namespace == 'ClovaSkill':
+        if event.name == 'SkillEnabled':
+            pass
+        if event.name == 'SkillDisabled':
+            pass
+    elif event.namespace == 'AudioPlayer':
+        if event.name == 'PlayStopped':
+            player = event_request.context.audio_player
+            assert player.activity == 'STOPPED', "Invalid request state for event PlayStopped."
+    else:
+        assert False, "Doesn't handle all events."
 
 
 @clova.handle.end
@@ -48,8 +65,8 @@ def intent_handler(clova_request):
 
 # Handles Build in Intents
 @clova.handle.intent("Clova.GuideIntent")
-def guide_intent(clova_request):
-    attributes = clova_request.session_attributes
+def guide_intent(intent_request):
+    attributes = intent_request.session.attributes
     # The session_attributes in the current response will become session_attributes in the next request
     message = "I can switch things off and on!"
     if 'HasExplainedService' in attributes:
@@ -62,17 +79,17 @@ def guide_intent(clova_request):
 
 
 @clova.handle.intent("Clova.CancelIntent")
-def cancel_intent(clova_request):
+def cancel_intent(intent_request):
     return clova.response(message="Action canceled!", end_session=True)
 
 
 @clova.handle.intent("Clova.YesIntent")
-def yes_intent(clova_request):
+def yes_intent(intent_request):
     return clova.response("Yes, that's good!")
 
 
 @clova.handle.intent("Clova.NoIntent")
-def no_intent(clova_request):
+def no_intent(intent_request):
     cek_message = cek.Message(message="はい、わかりました！", language="ja")
     return clova.response(cek_message)
 
@@ -108,6 +125,16 @@ class Test_CEKBase(unittest.TestCase):
         self.assertEqual(output_speech['values']['type'], 'PlainText')
         self.assertEqual(output_speech['values']['lang'], 'en')
         self.assertEqual(output_speech['values']['value'], 'Reprompt Message.')
+
+    def test_event_handler(self):
+        response = clova.route(body=EVENT_REQUEST_BODY, header=mocked_header)
+
+        self.assertIsNone(response)
+
+    def test_event_handler_audio_player(self):
+        response = clova.route(body=AUDIOPLAYER_EVENT_REQUEST_BODY, header=mocked_header)
+
+        self.assertIsNone(response)
 
     def test_end_handler(self):
         response_dict = clova.route(body=END_REQUEST_BODY, header=mocked_header)
@@ -252,7 +279,7 @@ class Test_CEKBase(unittest.TestCase):
         self.assertEqual(reprompt_output_speech['values']['value'], 'Are you still there?')
 
     def test_wrong_language(self):
-        # Tets builders
+        # Test builders
         for lang in ["es", "jp"]:
             with self.assertRaises(ValueError):
                 clova.response(cek.Message("Hola", lang))

@@ -85,11 +85,6 @@ END_REQUEST_BODY = b"""{
     }
   },
   "request": {
-    "event": {
-      "name": "",
-      "namespace": "",
-      "payload": {}
-    },
     "extensionId": "com.line.myApplication",
     "intent": {
       "intent": "",
@@ -100,6 +95,48 @@ END_REQUEST_BODY = b"""{
     "requestId": "12345678-aaaa-bbbb-cccc-1234567890ab",
     "timestamp": "2018-04-04T04:04:04Z",
     "type": "SessionEndedRequest"
+  },
+  "session": {
+    "new": true,
+    "sessionAttributes": {},
+    "sessionId": "00000000-0000-0000-0000-000000000000",
+    "user": {
+      "userId": "U081234567890abcdef1234567890abcd"
+    }
+  },
+  "version": "1.0"
+}"""
+
+EVENT_REQUEST_BODY = b"""{
+  "context": {
+    "System": {
+      "application": {
+        "applicationId": "com.line.myApplication"
+      },
+      "device": {
+        "deviceId": "1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
+        "display": {
+          "contentLayer": {
+            "height": 0,
+            "width": 0
+          },
+          "size": "none"
+        }
+      },
+      "user": {
+        "userId": "U081234567890abcdef1234567890abcd"
+      }
+    }
+  },
+  "request": {
+    "event": {
+      "name": "SkillDisabled",
+      "namespace": "ClovaSkill",
+      "payload": null
+    },
+    "requestId": "12345678-aaaa-bbbb-cccc-1234567890ab",
+    "timestamp": "2018-04-04T04:04:04Z",
+    "type": "EventRequest"
   },
   "session": {
     "new": true,
@@ -303,6 +340,63 @@ GUIDE_REQUEST_BODY = b"""
     }
 }
 """
+
+
+AUDIOPLAYER_EVENT_REQUEST_BODY = b"""
+{
+    "version": "1.0",
+    "session": {
+        "sessionId": "55555555-5555-5555-5555-555555555555",
+        "user": {
+            "userId": "1111111111111111111111",
+            "accessToken": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+        },
+        "new": true
+    },
+    "context": {
+        "AudioPlayer": {
+            "offsetInMilliseconds": 12734,
+            "playerActivity": "STOPPED",
+            "stream": {
+                "StreamInfo" : "WIP"
+            },
+            "totalInMilliseconds": 52734
+        },
+        "System": {
+            "application": {
+                "applicationId": "com.line.myApplication"
+            },
+            "user": {
+                "userId": "1111111111111111111111",
+                "accessToken": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+            },
+            "device": {
+                "deviceId": "dddddddd-dddd-dddd-dddd-dddddddddddd",
+                "display": {
+                    "size": "l100",
+                    "orientation": "landscape",
+                    "dpi": 96,
+                    "contentLayer": {
+                        "width": 640,
+                        "height": 360
+                    }
+                }
+            }
+        }
+    },
+    "request": {
+        "type": "EventRequest",
+        "requestId": "e5464288-50ff-4e99-928d-4a301e083d41",
+        "timestamp": "2017-09-05T05:41:21Z",
+        "event": {
+            "namespace": "AudioPlayer",
+            "name": "PlayStopped",
+            "payload": {}
+        }
+    }
+}
+"""
+
 
 DEFAULT_REQUEST_BODY = b"""
 {

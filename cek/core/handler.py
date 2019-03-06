@@ -19,6 +19,10 @@ from __future__ import division, print_function, absolute_import
 import json
 import base64
 
+from .models import Request
+from .models import IntentRequest
+from .models import Response
+
 from cryptography.hazmat.primitives.serialization import load_pem_public_key
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import padding
@@ -32,121 +36,6 @@ def validate_language(lang):
     if lang not in supported_languages:
         raise ValueError('Lang: "{}" is not supported. Currently supported languages are en, ja and ko.'.format(lang))
     return lang
-
-
-class Request(object):
-    """Type represents a request from CEK
-
-    :param dict request_dict: Dictioanry represents a request from CEK
-
-    :ivar str request_type: can be LaunchRequest, IntentRequest, etc.
-    :ivar str intent_name: name of intent if exist, otherwise None.
-    :ivar str is_intent: IntentRequest or not.
-    :ivar str user_id: user id.
-    :ivar str application_id: application id.
-    :ivar str access_token: access token.
-    :ivar str session_id: session id.
-    :ivar dict session_attributes: session attributes.
-    :ivar dict slots_dict: slots as dictionary
-    """
-
-    def __init__(self, request_dict):
-        self._request = request_dict['request']
-        self._session = request_dict['session']
-        self._context = request_dict['context']
-        self.version = request_dict['version']
-
-    @property
-    def request_type(self):
-        return self._request['type']
-
-    @property
-    def intent_name(self):
-        if not self.is_intent:
-            raise TypeError("Trying to access intent_name on a {}".format(self.request_type))
-        return self._request['intent']['name']
-
-    @property
-    def is_intent(self):
-        return self.request_type == 'IntentRequest'
-
-    @property
-    def user_id(self):
-        return self._session['user']['userId']
-
-    @property
-    def application_id(self):
-        return self._context['System']['application']['applicationId']
-
-    @property
-    def access_token(self):
-        return self._session['user'].get('accessToken')
-
-    @property
-    def session_id(self):
-        return self._session['sessionId']
-
-    @property
-    def session_attributes(self):
-        return self._session.get('sessionAttributes', {})
-
-    def slot_value(self, slot_name):
-        """Returns slot value or None if missing.
-
-        :param str slot_name: slot name
-        :returns: slot value if exists, None otherwise.
-        :rtype: str
-        :raises: TypeError: if the request is not an IntentRequest
-
-        Usage:
-          >>> req.slot_value('Light')
-          '電気'
-        """
-        if not self.is_intent:
-            raise TypeError("Trying to access slots on a {}".format(self.request_type))
-        slots = self._request['intent']['slots']
-        if slots is not None and slot_name in slots:
-            return slots[slot_name]['value']
-
-    @property
-    def slots_dict(self):
-        if not self.is_intent:
-            raise TypeError("Trying to access slots on a {}".format(self.request_type))
-        slots = self._request['intent']['slots']
-        return {slot_name: slots[slot_name]['value'] for slot_name in slots}
-
-    def verify_application_id(self, application_id):
-        """Verify application id
-
-        :raises RuntimeError: if application id is incorrect.
-        """
-        if self.application_id != application_id:
-            raise RuntimeError(
-                "Request contains wrong ApplicationId:{}. This request was not meant to be sent to this Application.".format(application_id))
-
-
-class Response(dict):
-    """Type represents a response from CEK
-
-    :ivar dict session_attributes: Session attributes in a dictionary format
-    :ivar dict reprompt: reprompt value, can be SimpleSpeech, SpeechSet or SpeechList.
-    """
-    @property
-    def session_attributes(self):
-        return self.setdefault('sessionAttributes', {})
-
-    @session_attributes.setter
-    def session_attributes(self, value):
-        self['sessionAttributes'] = value
-
-    @property
-    def reprompt(self):
-        return self['response'].setdefault('reprompt', {})
-
-    @reprompt.setter
-    def reprompt(self, value):
-        self['response']['shouldEndSession'] = False
-        self['response']['reprompt'] = {'outputSpeech': value}
 
 
 class SpeechBuilder(object):
@@ -320,7 +209,7 @@ class ResponseBuilder(object):
     def simple_speech_text(self, message, language=None, end_session=False):
         """ Build SimpleSpeech response with plain_text value
 
-        :param str message: String Message which clova should speak out
+        :param str message: String Request which clova should speak out
         :param str language: Language code of the message
         :param bool end_session: Whether Clova should continue to listen or end the session
         :return: Response that wraps a Dictionary in the format of a response for a SimpleSpeech
@@ -508,9 +397,6 @@ class RequestHandler(object):
 
     def __init__(self, application_id, debug_mode=False):
         self._default_key = '_default_'
-        self._intent_key = 'IntentRequest'
-        self._launch_key = 'LaunchRequest'
-        self._end_key = 'SessionEndedRequest'
         self._use_debug_mode = debug_mode
         self._application_id = application_id
 
@@ -527,7 +413,7 @@ UwIDAQAB
 """
         self._public_key = load_pem_public_key(__cek_public_key_data, backend=default_backend())
 
-        self._handlers = {self._intent_key: {}}
+        self._handlers = {Request.intent_key: {}}
 
     def default(self, func):
         """Default handler
@@ -552,7 +438,20 @@ UwIDAQAB
             ... def launch_request_handler(clova_request):
             ...     return builder.simple_speech_text("こんにちは世界。スキルを起動します")
         """
-        self._handlers[self._launch_key] = func
+        self._handlers[Request.launch_key] = func
+        return func
+
+    def event(self, func):
+        """Event handler called on EventRequest.
+
+        :param func: Function
+
+        Usage:
+            >>> @clova_handler.event
+            ... def event_request_handler(clova_request):
+            ...
+        """
+        self._handlers[Request.event_key] = func
         return func
 
     def intent(self, intent):
@@ -566,7 +465,7 @@ UwIDAQAB
             ...     return builder.simple_speech_text("はい、わかりました。")
         """
         def _handler(func):
-            self._handlers[self._intent_key][intent] = func
+            self._handlers[Request.intent_key][intent] = func
             return func
         return _handler
 
@@ -581,7 +480,7 @@ UwIDAQAB
             ...     # Session ended, this handler can be used to clean up
             ...     return
         """
-        self._handlers[self._end_key] = func
+        self._handlers[Request.session_ended_key] = func
         return func
 
     def route_request(self, request_body, request_header_dict):
@@ -592,7 +491,7 @@ UwIDAQAB
         :return: Returns body for CEK response
         :rtype: cek.core.Response
         :raises cryptography.exceptions.InvalidSignature: (non-debug mode only) if request verification failed.
-        :raises RuntimeError: (non-debug mode only) if application id is incorrect.
+        :raises cek.ApplicationIdMismatch: (non-debug mode only) if application id is incorrect.
 
         Usage:
             >>> from flask import Flask, request, Response
@@ -610,17 +509,20 @@ UwIDAQAB
 
         body_string = request_body.decode("utf-8")
         request_dict = json.loads(body_string)
-        request = Request(request_dict)
+
+        handler_fn = self._handlers[self._default_key]
+
+        request = Request.create(request_dict)
 
         if not self._use_debug_mode:
             request.verify_application_id(self._application_id)
 
-        handler_fn = self._handlers[self._default_key]
-
-        if not request.is_intent and request.request_type in self._handlers:
-            handler_fn = self._handlers[request.request_type]
-        elif request.is_intent and request.intent_name in self._handlers[self._intent_key]:
-            handler_fn = self._handlers[self._intent_key][request.intent_name]
+        is_intent_request = isinstance(request, IntentRequest)
+        if is_intent_request:
+            if request.name in self._handlers[Request.intent_key]:
+                handler_fn = self._handlers[Request.intent_key][request.name]
+        elif request.type in self._handlers:
+            handler_fn = self._handlers[request.type]
 
         return handler_fn(request)
 
