@@ -58,7 +58,7 @@ class Test_IntentRequest(unittest.TestCase):
         self.assertEqual(value, u"電気")
 
     def test_slots(self):
-        slots = self.request.slots_dict
+        slots = self.request.slots
         if "Light" in slots:
             light_value = slots["Light"]
 
