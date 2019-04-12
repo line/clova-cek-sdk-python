@@ -231,17 +231,17 @@ class Request(object):
 
 
 class LaunchRequest(Request):
-    """ This request is used to declare that the user has requested to use a this extension. """
+    """ Request received when a user launches the skill. """
     pass
 
 
 class SessionEndedRequest(Request):
-    """ Is send to declare that the user has requested to stop using this extension. """
+    """ Request received when a user has requested to stop using the skill. """
     pass
 
 
 class IntentRequest(Request):
-    """ IntentRequest is used to send user requests to the extension based on the predefined interaction model.
+    """ Request received when a user sends a requests to the skill based on the predefined interaction model.
 
     :ivar str name: name of the intent.
     :ivar dict slots: dictionary of slot name to value.
@@ -274,7 +274,7 @@ class IntentRequest(Request):
 
 
 class EventRequest(Request):
-    """ Used when changes in the client state or related requests need to be sent to the extension.
+    """ Request received when an event on the user's device occurred.
 
     :ivar str id: is the dialog request id.
     :ivar Event event: contains the payload from the client.
