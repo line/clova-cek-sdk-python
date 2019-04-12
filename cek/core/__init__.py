@@ -14,4 +14,7 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-version = '1.1.0'
+from __future__ import division, print_function, absolute_import
+
+from .handler import *
+from .models import *

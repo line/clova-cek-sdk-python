@@ -167,7 +167,7 @@ class Clova(object):
 
         Depending on the request type (intent, launch, etc), the function routes
         the request to the proper handler defined by the user and returns the response
-        as a dictionary. Request verifiation is done per request before routing.
+        as a dictionary. Request verification is done per request before routing.
 
         The method is an alias to :meth:`cek.core.RequestHandler.route_request`.
 
