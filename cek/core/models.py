@@ -31,9 +31,9 @@ class ApplicationIdMismatch(Exception):
 
 
 class User(object):
-    """Type which holds details about user.
+    """ Contains user details.
 
-        :param dict user_dict: Dictionary represents the user field from the CEK request.
+        :param dict user_dict: user as dictionary from the CEK request.
 
         :ivar str id: Clova ID of the user.
         :ivar str access_token: Access token of the user.
@@ -51,13 +51,13 @@ class User(object):
 
 
 class Session(object):
-    """Type which holds details about each user's session.
+    """ Contains details about a user's session.
 
-        :param dict session_dict: Dictionary represents the session field from the CEK request.
+        :param dict session_dict: session as dictionary from the CEK request.
 
         :ivar str id: is the session id.
-        :ivar bool is_new: distinguishes whether the request message is for a new session or the existing session.
-        :ivar dict attributes: used in multi-turn dialogue and contains the information set in previous response.sessionAttributes.
+        :ivar bool is_new: distinguishes whether the request message is for a new or the existing session.
+        :ivar dict attributes: used in a multi-turn dialogue and contains the information set in the previous response.sessionAttributes.
         :ivar User user: Current user connected to the device. Can be different from context.user.
     """
 
@@ -83,9 +83,9 @@ class Session(object):
 
 
 class Device(object):
-    """Type which holds details about user's device.
+    """ Contains details about user's device.
 
-        :param dict device_dict: Dictionary represents the device field from the CEK request.
+        :param dict device_dict: device as dictionary from the CEK request.
 
         :ivar str id: ID of the device.
     """
@@ -99,14 +99,14 @@ class Device(object):
 
 
 class AudioPlayer(object):
-    """Type which holds details of the media content currently being played or played last.
+    """ Contains details of the media content currently being played or played last.
 
-    :param dict audio_player_dict: Dictionary represents the AudioPlayer field from the CEK request.
+    :param dict audio_player_dict: Dictionary represents the AudioPlayer from the CEK request.
 
     :ivar num offset: is the most recent playback position of the recently played media in milliseconds.
     :ivar num total: is the total duration of the recently played media in milliseconds.
-    :ivar str activity: is indicating the state of player. Can be "IDLE", "PLAYING", "PAUSED" or "STOPPED".
-    :ivar dict stream: contains details of the currently playing media. TODO: AudioStreamInfoObject specs are still WIP.
+    :ivar str activity: is indicating the current state of the player. Can be "IDLE", "PLAYING", "PAUSED" or "STOPPED".
+    :ivar dict stream: contains details of the currently played media. TODO: AudioStreamInfoObject specs are still WIP.
     """
 
     def __init__(self, audio_player_dict):
@@ -130,11 +130,11 @@ class AudioPlayer(object):
 
 
 class Context(object):
-    """Type which holds context information of the client.
+    """ Contains context information of the client.
 
     :param dict context_dict: Dictionary represents the context from a CEK request.
 
-    :ivar AudioPlayer audio_player: holds details of media content currently being played or played last. Can be None if empty.
+    :ivar AudioPlayer audio_player: details of media content currently being played or played last. Can be None if empty.
     :ivar Device device: contains information of the client device.
     :ivar User user: default User of the device.
     """
@@ -162,9 +162,9 @@ class Context(object):
 
 
 class Request(object):
-    """Type represents a request from CEK.
+    """ Represents a CEK request.
 
-    :param dict request_dict: Dictionary represents a request from CEK.
+    :param dict request_dict: Dictionary representation of a request from CEK.
 
     :cvar str launch_key: Key to identify the 'LaunchRequest' request type.
     :cvar str intent_key: Key to identify the 'IntentRequest' request type.
@@ -173,7 +173,7 @@ class Request(object):
 
     :ivar str type: type of request. Can be IntentRequest, EventRequest, LaunchRequest, SessionEndedRequest.
     :ivar Context context: context of the current request from CEK.
-    :ivar str application_id: application id.
+    :ivar str application_id: application id which has been set in the Developer Center
     """
 
     launch_key = 'LaunchRequest'
@@ -192,7 +192,7 @@ class Request(object):
     @classmethod
     def create(cls, request_dict):
         """
-        Factory method to create correct Response depending on request type.
+        Factory method for creating right Response depending on request type.
 
         :param dict request_dict: Dictionary represents a request from CEK.
         """
@@ -231,20 +231,20 @@ class Request(object):
 
 
 class LaunchRequest(Request):
-    """Type represents a LaunchRequest from CEK."""
+    """ Request received when a user launches the skill. """
     pass
 
 
 class SessionEndedRequest(Request):
-    """Type represents an SessionEndedRequest from CEK."""
+    """ Request received when a user has requested to stop using the skill. """
     pass
 
 
 class IntentRequest(Request):
-    """Type represents an IntentRequest from CEK.
+    """ Request received when a user sends a requests to the skill based on the predefined interaction model.
 
     :ivar str name: name of the intent.
-    :ivar dict slots_dict: slot values as dictionary.
+    :ivar dict slots: dictionary of slot name to value.
     """
 
     @property
@@ -252,7 +252,7 @@ class IntentRequest(Request):
         return self._request['intent']['name']
 
     @property
-    def slots_dict(self):
+    def slots(self):
         slots = self._request['intent']['slots']
         return {slot_name: slots[slot_name]['value'] for slot_name in slots}
 
@@ -261,13 +261,12 @@ class IntentRequest(Request):
 
         :param str slot_name: slot name
         :returns: slot value if exists, None otherwise.
-        :rtype: str
 
         Usage:
-        >>> @clova.handle.intent("TurnOn")
-        >>> def turn_on_handler(request):
-        >>>     request.slot_value('Light')
-          '電気'
+            >>> @clova.handle.intent("TurnOn")
+            >>> def turn_on_handler(request):
+            >>>     request.slot_value('Light')
+            '電気'
         """
         slots = self._request['intent']['slots']
         if slots is not None and slot_name in slots:
@@ -275,10 +274,10 @@ class IntentRequest(Request):
 
 
 class EventRequest(Request):
-    """Type represents an EventRequest from CEK.
+    """ Request received when an event on the user's device occurred.
 
     :ivar str id: is the dialog request id.
-    :ivar Event event: stores the information sent by the client to Clova.
+    :ivar Event event: contains the payload from the client.
     :ivar str timestamp: of when the client sends information to Clova (ISO 8601).
     """
 
@@ -300,7 +299,7 @@ class EventRequest(Request):
 
 
 class Event(object):
-    """Type represents the stored information sent by the client to Clova.
+    """ The object that stores the information sent by the client to Clova.
 
     :ivar str name: is the name of the event message sent by the client to Clova.
     :ivar str namespace: is the namespace of the event message.
@@ -324,9 +323,9 @@ class Event(object):
 
 
 class Response(dict):
-    """Type represents a response from CEK.
+    """ The object containing the response information of the extension.
 
-    :ivar dict session_attributes: Session attributes in a dictionary format.
+    :ivar dict session_attributes: Session attributes in a dictionary format. Will be send back in the next request.
     :ivar dict reprompt: reprompt value, can be SimpleSpeech, SpeechSet or SpeechList.
     """
     @property
