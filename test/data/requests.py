@@ -149,6 +149,42 @@ EVENT_REQUEST_BODY = b"""{
   "version": "1.0"
 }"""
 
+
+EVENT_REQUEST_BODY_SKILL_ENABLED_FROM_SKILL_STORE = b"""{
+  "context": {
+    "System": {
+      "application": {
+        "applicationId": "com.line.myApplication"
+      },
+      "device": {
+        "deviceId": "1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
+        "display": {
+          "contentLayer": {
+            "height": 0,
+            "width": 0
+          },
+          "size": "none"
+        }
+      },
+      "user": {
+        "userId": "U081234567890abcdef1234567890abcd"
+      }
+    }
+  },
+  "request": {
+    "event": {
+      "name": "SkillEnabled",
+      "namespace": "ClovaSkill",
+      "payload": null
+    },
+    "requestId": "12345678-aaaa-bbbb-cccc-1234567890ab",
+    "timestamp": "2018-04-04T04:04:04Z",
+    "type": "EventRequest"
+  },
+  "session": null,
+  "version": "1.0"
+}"""
+
 INTENT_REQUEST_BODY = b"""
 {
     "version": "1.0",

@@ -20,6 +20,7 @@ import cek
 
 import json
 from data.requests import EVENT_REQUEST_BODY
+from data.requests import EVENT_REQUEST_BODY_SKILL_ENABLED_FROM_SKILL_STORE
 
 
 class Test_IntentRequest(unittest.TestCase):
@@ -28,6 +29,10 @@ class Test_IntentRequest(unittest.TestCase):
         body_string = EVENT_REQUEST_BODY.decode("utf-8")
         request_dict = json.loads(body_string)
         self.request = cek.Request.create(request_dict)
+
+        body_string = EVENT_REQUEST_BODY_SKILL_ENABLED_FROM_SKILL_STORE.decode("utf-8")
+        request_dict = json.loads(body_string)
+        self.request_from_skill_store = cek.Request.create(request_dict)
 
     def tearDown(self):
         self.request = None
@@ -42,6 +47,13 @@ class Test_IntentRequest(unittest.TestCase):
 
         self.assertEqual(event.namespace, 'ClovaSkill')
         self.assertEqual(event.name, 'SkillDisabled')
+        self.assertIsNone(event.payload)
+
+    def test_request_event_skill_enable_from_skill_store(self):
+        event = self.request_from_skill_store.event
+
+        self.assertEqual(event.namespace, 'ClovaSkill')
+        self.assertEqual(event.name, 'SkillEnabled')
         self.assertIsNone(event.payload)
 
     def test_request_timestamp(self):
