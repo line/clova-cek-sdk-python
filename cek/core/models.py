@@ -62,8 +62,10 @@ class Session(object):
     """
 
     def __init__(self, session_dict):
+        if session_dict is None:
+            session_dict = {}
         self._session = session_dict
-        self._user = User(session_dict['user'])
+        self._user = User(session_dict.get('user', {}))
 
     @property
     def id(self):
