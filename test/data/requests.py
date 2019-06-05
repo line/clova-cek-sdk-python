@@ -230,6 +230,16 @@ INTENT_REQUEST_BODY = b"""
                 "Light": {
                     "name": "Light",
                     "value": "\xe9\x9b\xbb\xe6\xb0\x97"
+                },
+                "when": {
+                    "name": "when",
+                    "value": "19:00:00/19:30:00",
+                    "valueType": "TIME.INTERVAL"
+                },
+                "degree": {
+                    "name": "degree",
+                    "value": "27",
+                    "unit": "\xc2\xb0C"
                 }
             }
         }

@@ -57,12 +57,32 @@ class Test_IntentRequest(unittest.TestCase):
 
         self.assertEqual(value, u"電気")
 
+    def test_request_returns_slot_value_type(self):
+        value = self.request.slot_value_type("when")
+
+        self.assertEqual(value, "TIME.INTERVAL")
+
+    def test_request_returns_no_slot_value_type(self):
+        value = self.request.slot_value_type("Light")
+
+        self.assertIsNone(value)
+
+    def test_request_returns_slot_unit(self):
+        value = self.request.slot_unit("degree")
+
+        self.assertEqual(value, u"°C")
+
+    def test_request_returns_no_slot_unit(self):
+        value = self.request.slot_unit("when")
+
+        self.assertIsNone(value)
+
     def test_slots(self):
         slots = self.request.slots
         if "Light" in slots:
             light_value = slots["Light"]
 
-        expected_slots = {'AirCon': 'Air Conditioner', 'Light': u'電気'}
+        expected_slots = {'AirCon': 'Air Conditioner', 'Light': u'電気', 'when': '19:00:00/19:30:00', 'degree': '27'}
         expected_light_value = u'電気'
         self.assertEqual(slots, expected_slots)
         self.assertEqual(light_value, expected_light_value)

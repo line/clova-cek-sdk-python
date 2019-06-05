@@ -274,6 +274,42 @@ class IntentRequest(Request):
         if slots is not None and slot_name in slots:
             return slots[slot_name]['value']
 
+    def slot_value_type(self, slot_name):
+        """Returns slot valueType or None if missing.
+
+        :param str slot_name: slot name
+        :returns: slot valueType if exists, None otherwise.
+
+        Usage:
+            >>> @clova.handle.intent("TurnOn")
+            >>> def turn_on_handler(request):
+            >>>     request.slot_value_type('when')
+            'TIME.INTERVAL'
+        """
+        slots = self._request['intent']['slots']
+        if slots is not None and slot_name in slots:
+            slot = slots[slot_name]
+            if 'valueType' in slot:
+                return slot['valueType']
+
+    def slot_unit(self, slot_name):
+        """Returns slot unit or None if missing.
+
+        :param str slot_name: slot name
+        :returns: slot unit if exists, None otherwise.
+
+        Usage:
+            >>> @clova.handle.intent("TurnOn")
+            >>> def turn_on_handler(request):
+            >>>     request.slot_unit('degree')
+            '°C'
+        """
+        slots = self._request['intent']['slots']
+        if slots is not None and slot_name in slots:
+            slot = slots[slot_name]
+            if 'unit' in slot:
+                return slot['unit']
+
 
 class EventRequest(Request):
     """ Request received when an event on the user's device occurred.
