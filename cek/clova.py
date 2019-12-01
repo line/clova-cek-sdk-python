@@ -87,7 +87,7 @@ class Clova(object):
 
       Plug into your web application using :meth:`Clova.route`:
 
-      >>> rom flask import Flask, request, jsonify
+      >>> from flask import Flask, request, jsonify
       >>> app = Flask(__name__)
       >>> @app.route('/app', methods=['POST'])
       ... def my_service():
